@@ -11,6 +11,8 @@ nexttile; plot(oo_.irfs.w_epsilon_a), title('Wage (w)');
 nexttile; plot(oo_.irfs.a_epsilon_a), title('Capital (k)');
 nexttile; plot(oo_.irfs.a_epsilon_a), title('Technology (a)');
 
+%%Plot the Autocorrelation in 6 lags
+
 y_dynare = oo_.endo_simul(strmatch('y', M_.endo_names, 'exact'), :);
 c_dynare = oo_.endo_simul(strmatch('c', M_.endo_names, 'exact'), :);
 n_dynare = oo_.endo_simul(strmatch('n', M_.endo_names, 'exact'), :);
