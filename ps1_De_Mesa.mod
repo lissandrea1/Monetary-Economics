@@ -27,13 +27,13 @@ varexo epsilon_a;
 
 model;
     // 1. Euler equation for consumption
-    c = beta * (c(+1)) - (r(+1)) ; // Consumption Euler equation with discount factor
+    c = (c(+1)) - beta*(r(+1)) ; // Consumption Euler equation with discount factor
 
     // 2. Capital law of motion (adjusting for timing)
-    k = (1 - delta) * k(-1) + inv; // Capital is predetermined, so we use k(-1)
+    k = (1 - delta) * k(-1) + delta*inv; // Capital is predetermined, so we use k(-1)
 
     // 3. Labor supply equation
-    psi * n = w; // Log-linearized labor supply equation
+    n=(1/phi)*w-(1/phi)*c; // Log-linearized labor supply equation
 
     // 4. Budget constraint
     c + inv = w * n + r * k(-1); // Use k(-1) to account for predetermined capital
@@ -60,16 +60,6 @@ end;
 steady;
 
 // Solving the model using linearization
-stoch_simul(order=1, irf=50);
+stoch_simul(order=1, irf=50, periods=200);
 
-// Plot the impulse response functions
-figure;
-tiledlayout(3,3)
 
-nexttile; plot(oo_.irfs.y_epsilon_a), title('Output (y)');
-nexttile; plot(oo_.irfs.c_epsilon_a), title('Consumption (c)');
-nexttile; plot(oo_.irfs.inv_epsilon_a), title('Investment (inv)');
-nexttile; plot(oo_.irfs.n_epsilon_a), title('Labor (n)');
-nexttile; plot(oo_.irfs.r_epsilon_a), title('Interest rate (r)');
-nexttile; plot(oo_.irfs.w_epsilon_a), title('Wage (w)');
-nexttile; plot(oo_.irfs.a_epsilon_a), title('Technology (a)');
