@@ -15,8 +15,8 @@ parameters aalpha, delta, ip, iw, gammam, h, lambda_p, lambda_w, L_ss, pi_ss, bb
 
 // Calibration values for parameters
 delta = 0.025;
-aalpha=0.3;
-bbeta = 0.25;
+aalpha=0.3;     //SW used 0.24
+bbeta = 0.25;     //SW used 0.9995
 gammam = 0.5;
 nu=2;
 h = 0.5;  
