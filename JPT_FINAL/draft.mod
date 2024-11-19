@@ -1,176 +1,269 @@
 
 // Replication JPT
 
-// Declare endogenous variables (36 variables)
+// Declare endogenous variables (38 variables)
 var y, k, L, rho, w, s, ppi, c, lambda, R, u, phi, i, kbar, x, gw, y_star, k_star, L_star, rho_star, w_star, s_star, c_star, lambda_star, R_star, u_star, phi_star, i_star, 
-     kbar_star, x_star, gw_star, z, b, g, mu, etamp; 
+    kbar_star, x_star, gw_star, z, b, g, mu, etamp, lambda_p, lambda_w; 
 
 // Declare exogenous variables (shocks)
-varexo eps_z, eps_mu, eps_mp, eps_g, eps_p;
+varexo eps_z, eps_mu, eps_mp, eps_g, eps_p, eps_w, eps_b;
 
 // Declare parameters (59 parameters)
-parameters aalpha, delta, ip, iw, gammma, h, lambda_p, lambda_w, L_ss, pi_ss, bbeta, nu, zeta_p, zeta_w, xi, s2prime, phi_pi, phi_x, phi_dx, rho_R, rho_mp, rho_z, rho_g, rho_mu, rho_p, rho_w, rho_b, theta_p, theta_w,
-           lambdap_ss, lambdaw_ss, g_ss, kappa, rho_ss, w_ss, kLratio, FLratio, F, yLratio, iLratio, cLratio, k_ss, y_ss, i_ss, c_ss, R_ss, kLstarratio, FLstarratio, Fstar, yLstarratio,
-           iLstarratio, cLstarratio, kstar_ss, ystar_ss, istar_ss, cstar_ss, wstar_ss, discoef, kappa_w ;
+parameters aalpha, delta, ip, iw, gammam, h, lambda_p_ss, lambda_w_ss, L_ss, pi_ss, bbeta, nu, zeta_p, zeta_w, xi, s2prime, phi_pi, phi_x, phi_dx, rho_R, rho_mp, rho_z, rho_g, rho_mu, rho_p, rho_w, rho_b, theta_p, theta_w,
+           theta_mp, theta_z, theta_g, theta_mu, theta_b, g_ss, kappa, rho_ss, w_ss, kLratio, FLratio, F, yLratio, iLratio, cLratio, k_ss, y_ss, i_ss, c_ss, R_ss, kLstarratio, FLstarratio, Fstar, yLstarratio,
+           iLstarratio, cLstarratio, kstar_ss, ystar_ss, istar_ss, cstar_ss, wstar_ss, kappa_w;
 
 // Calibration values for parameters
 delta = 0.025; 
-aalpha=0.3;  ****
-bbeta = 0.995;  
-gammma = 0.5;
-nu=2;
+aalpha = 0.3;
+bbeta = 0.25;  
+gammam = 0.5;
+nu = 2;
 h = 0.5;  
 zeta_p = 0.84;
 zeta_w = 0.7;
 ip = 0.24;
-lambda_w = 0.15;
-lambda_p = 0.23;
+lambda_w_ss = 0.15;
+lambda_p_ss = 0.15;
+pi_ss = 1.02; // Steady-state inflation
+iw = 0.5; // Wage stickiness parameter
+xi = 5; // Elasticity parameter
+s2prime = 0.5; // Sensitivity parameter
+rho_R = 0.8;
+rho_mp = 0.4;
+rho_z = 0.6;
+rho_g = 0.6;
+rho_mu = 0.6;
+rho_p = 0.6;
+rho_w = 0.6;
+rho_b = 0.6;
+phi_pi = 1.7;
+phi_x = 0.13;
+phi_dx = 0.13;
+theta_p = 0.10; // Price rigidity parameter
+theta_w = 0.10; // Wage rigidity parameter
+L_ss = 0.00; // Initial value for steady-state labor
 
-//steady_state_model
-
+// Compute parameters that depend on calibrated values (must be before 'model' block)
 g_ss = 1 / (1 - 0.22); // Fixed g_ss calculation
-R_ss = (1 + gammma) * pi_ss / bbeta;
-rho_ss = (exp(gammma)/bbeta)-(1-delta);
-w_ss = ((1/(1+lambdap_ss))*(aalpha^aalpha)*((1-aalpha)^(1-aalpha))*(1/rho_ss^aalpha))^(1/(1-aalpha));
-kLratio = (w_ss/rho_ss)*(aalpha/(1-aalpha));
-FLratio = kLratio^aalpha -rho_ss*kLratio-w_ss;
-yLratio = kLratio^aalpha-FLratio;
-iLratio = (1-(1-delta)*exp(-gammma))*exp(gammma)*kLratio;     
-cLratio = yLratio*(1/g_ss)-iLratio;
-lambdaL = (cLratio^(-1))*(exp(gammma)-h*bbeta)/(exp(gammma)-h);
-L_ss = ((w_ss*lambdaL)/rho_ss)^(1/(1+nu)); 
-k_ss =  kLratio * L_ss;
-y_ss =  yLratio * L_ss;
-i_ss =  iLratio * L_ss;
-c_ss =  cLratio * L_ss;
-F    =  FLratio * L_ss;
-oomega = ((1 / (1 + lambda_p)) * (aalpha^aalpha) * ((1 - aalpha)^(1 - aalpha)) * (1 / rho_ss)^aalpha)^(1 / (1 - aalpha)); // Corrected oomega
-kappa = ((1 - zeta_p * bbeta) * (1 - zeta_p)) / (zeta_p * (1 + ip * bbeta)); // Fixed kappa
-kappa_w = ((1 - zeta_w * bbeta) * (1 - zeta_w)) / (zeta_w * (1 + bbeta) * (1 + nu * (1 + (1 / lambda_w)))); // Fixed kappa_w
+rho_ss = (exp(gammam)/bbeta) - (1 - delta);
+w_ss = ((1 / (1 + lambda_p_ss)) * (aalpha^aalpha) * ((1 - aalpha)^(1 - aalpha)) * (1 / rho_ss^aalpha))^(1 / (1 - aalpha));
+kLratio = (w_ss / rho_ss) * (aalpha / (1 - aalpha));
+FLratio = kLratio^aalpha - rho_ss * kLratio - w_ss;
+yLratio = kLratio^aalpha - FLratio;
+iLratio = (1 - (1 - delta) * exp(-gammam)) * exp(gammam) * kLratio;     
+cLratio = yLratio * (1 / g_ss) - iLratio;
+lambdaL = cLratio^(-1) * (exp(gammam) - h * bbeta) / (exp(gammam) - h);
+// L_ss is already assigned above in the calibration block
+k_ss = kLratio * L_ss;
+y_ss = yLratio * L_ss;
+i_ss = iLratio * L_ss;
+c_ss = cLratio * L_ss;
+F = FLratio * L_ss;
+oomega = ((1 / (1 + lambda_p_ss)) * (aalpha^aalpha) * ((1 - aalpha)^(1 - aalpha)) * (1 / rho_ss)^aalpha)^(1 / (1 - aalpha));
+kappa = ((1 - zeta_p * bbeta) * (1 - zeta_p)) / (zeta_p * (1 + ip * bbeta));
+kappa_w = ((1 - zeta_w * bbeta) * (1 - zeta_w)) / (zeta_w * (1 + bbeta) * (1 + nu * (1 + (1 / lambda_w_ss))));
+R_ss = (1 + gammam) * pi_ss / bbeta;
 
-//Steady state of flexible economy
-wstar_ss = ((aalpha^aalpha)*((1-aalpha)^(1-aalpha))*(1/rho_ss^aalpha))^(1/(1-aalpha));
-kLstarratio = (wstar_ss/rho_ss)*(aalpha/(1-aalpha));
-FLstarratio = ((kLstarratio)^aalpha)-rho_ss*kLstarratio-wstar_ss;
-yLstarratio = ((kLstarratio)^aalpha)-FLstarratio;
-iLstarratio = (1-(1-delta)*exp(-gammma))*exp(gammma)*kLstarratio;     
-cLstarratio = yLstarratio*(1/g_ss)-iLstarratio;
-lambdaLstar = (cLstarratio^(-1))*(exp(gammma)-h*bbeta)/(exp(gammma)-h);
-Lstar_ss = ((wstar_ss*lambdaLstar)/rho_ss)^(1/(1+nu));
-kstar_ss = kLstarratio * Lstar_ss;
-ystar_ss = yLstarratio * Lstar_ss;
-istar_ss = iLstarratio * Lstar_ss;
-cstar_ss = cLstarratio * Lstar_ss;
-Fstar    = FLstarratio * Lstar_ss;
-
+// Steady-state values for flexible-price economy
+wstar_ss = w_ss; // Assuming same as w_ss
+kLstarratio = kLratio;
+FLstarratio = FLratio;
+yLstarratio = yLratio;
+iLstarratio = iLratio;
+cLstarratio = cLratio;
+lambdaLstar = lambdaL;
+Lstar_ss = L_ss;
+kstar_ss = k_ss;
+ystar_ss = y_ss;
+istar_ss = i_ss;
+cstar_ss = c_ss;
+Fstar = F;
 // Model equations in log-linearized form
 model;
 
-//1. 
+//1. Output equation
   y = ((y_ss + F) / y_ss) * (aalpha * k + (1 - aalpha) * L);
-//2. 
+//2. Real wage
   rho = w + L - k;
-//3. 
+//3. Real marginal cost
   s = aalpha * rho + (1 - aalpha) * w;
-//4. 
+//4. Phillips curve
   ppi = (bbeta / (1 + ip * bbeta)) * ppi(+1) + (ip / (1 + ip * bbeta)) * ppi(-1) + kappa * s + kappa * lambda_p;
-//5.
-  lambda = (h * bbeta * exp(gammma)) / (exp(gammma) - h * bbeta) * (exp(gammma) - h) * c(+1) - (exp(2 * gammma) + (h^2) * bbeta) / (exp(gammma) - h * bbeta) * (exp(gammma) - h) * c + (h * exp(gammma)) / (exp(gammma) - h * bbeta) * (exp(gammma) - h) * c(-1) + (h * bbeta * exp(gammma) * rho_z - h * exp(gammma)) / (exp(gammma) - h * bbeta) * (exp(gammma) - h) * z +(exp(gammma)-h*bbeta*rho_b)/(exp(gammma)-h*bbeta)*b;
-//6. 
+//5. Consumption Euler equation
+  lambda = ((h * bbeta * exp(gammam)) / (exp(gammam) - h * bbeta)) * (exp(gammam) - h) * c(+1) 
+          - ((exp(2 * gammam) + h^2 * bbeta) / (exp(gammam) - h * bbeta)) * (exp(gammam) - h) * c 
+          + ((h * exp(gammam)) / (exp(gammam) - h * bbeta)) * (exp(gammam) - h) * c(-1) 
+          + ((h * bbeta * exp(gammam) * rho_z - h * exp(gammam)) / (exp(gammam) - h * bbeta)) * (exp(gammam) - h) * z 
+          + ((exp(gammam) - h * bbeta * rho_b) / (exp(gammam) - h * bbeta)) * b;
+//6. Euler equation for bonds
   lambda = R + lambda(+1) - z(+1) - ppi(+1);
-//7. 
+//7. Capital utilization
   rho = xi * u;
-//8. 
-  phi = (1 - delta) * bbeta * exp(-gammma) * (phi(+1) - z(+1)) + (1 - (1 - delta) * bbeta * exp(-gammma)) * (lambda(+1) - z(+1) + rho(+1));
-//9. 
-  lambda = phi + mu - exp(2 * gammma) * s2prime * (i - i(-1) + z) + bbeta * exp(2 * gammma) * s2prime * (i(+1) - i + z(+1));
-//10.
+//8. Value of capital
+  phi = (1 - delta) * bbeta * exp(-gammam) * (phi(+1) - z(+1)) 
+        + (1 - (1 - delta) * bbeta * exp(-gammam)) * (lambda(+1) - z(+1) + rho(+1));
+//9. Investment Euler equation
+  lambda = phi + mu - exp(2 * gammam) * s2prime * (i - i(-1) + z) 
+           + bbeta * exp(2 * gammam) * s2prime * (i(+1) - i + z(+1));
+//10. Capital accumulation
   k = u + kbar(-1) - z;
-//11. 
-  kbar = (1 - delta) * exp(-gammma) * (kbar(-1) - z) + (1 - (1 - delta) * exp(-gammma)) * (mu + i);
-//12.
-  w = (1 / (1 + bbeta)) * w(-1) + bbeta / (1 + bbeta) * w(+1) - kappa_w * gw + (iw / (1 + bbeta)) * ppi(-1) - (1 + bbeta * iw / (1 + bbeta)) * ppi + (bbeta / (1 / bbeta)) * ppi(+1) + (iw / (1 + bbeta)) * z(-1) - ((1 + bbeta * iw - rho_z * bbeta) / (1 + bbeta)) * z + kappa_w*lambda_w;
-//13.
+//11. Law of motion for capital stock
+  kbar = (1 - delta) * exp(-gammam) * (kbar(-1) - z) 
+         + (1 - (1 - delta) * exp(-gammam)) * (mu + i);
+//12. Wage equation
+  w = (1 / (1 + bbeta)) * w(-1) + (bbeta / (1 + bbeta)) * w(+1) 
+      - kappa_w * gw + (iw / (1 + bbeta)) * ppi(-1) 
+      - ((1 + bbeta * iw) / (1 + bbeta)) * ppi 
+      + (bbeta / (1 + bbeta)) * ppi(+1) 
+      + (iw / (1 + bbeta)) * z(-1) 
+      - ((1 + bbeta * iw - rho_z * bbeta) / (1 + bbeta)) * z 
+      + kappa_w * lambda_w;
+//13. Wage gap
   gw = w - (nu * L + b - lambda);
-//14.
-  R = rho_R * R(-1) + (1 - rho_R) * (phi_pi * ppi + phi_x * (x - x_star)) + phi_dx * ((x - x(-1)) - (x_star - x_star(-1))) + etamp;
-//15.
-  x = y - ((rho * k) / y) * u;
-//16. 
-  (1 / g_ss) * y = (1 / g_ss) * g + (c_ss / y_ss) * c + (i_ss / y_ss) * i + (rho_ss * k_ss / y_ss) * u;
+//14. Monetary policy rule
+  R = rho_R * R(-1) + (1 - rho_R) * (phi_pi * ppi + phi_x * (x - x_star)) 
+      + phi_dx * ((x - x(-1)) - (x_star - x_star(-1))) + etamp;
+//15. Output gap
+  x = y - y_star;
+//16. National income identity
+  y = g + (c_ss / y_ss) * c + (i_ss / y_ss) * i + (rho_ss * k_ss / y_ss) * u;
 
-//Equations with flexible prices and wages;
+// Equations with flexible prices and wages
+//17. Flexible-price output
+  y_star = ((ystar_ss + Fstar) / ystar_ss) * (aalpha * k_star + (1 - aalpha) * L_star);
+//18. Flexible-price real wage
+  rho_star = w_star + L_star - k_star;
+//19. Flexible-price marginal cost (zero in flexible-price economy)
+  s_star = aalpha * rho_star + (1 - aalpha) * w_star;
+//20. Flexible-price marginal cost equals zero
+  0 = s_star;
+//21. Flexible-price consumption Euler equation
+  lambda_star = ((h * bbeta * exp(gammam)) / (exp(gammam) - h * bbeta)) * (exp(gammam) - h) * c_star(+1) 
+                - ((exp(2 * gammam) + h^2 * bbeta) / (exp(gammam) - h * bbeta)) * (exp(gammam) - h) * c_star 
+                + ((h * exp(gammam)) / (exp(gammam) - h * bbeta)) * (exp(gammam) - h) * c_star(-1) 
+                + ((h * bbeta * exp(gammam) * rho_z - h * exp(gammam)) / (exp(gammam) - h * bbeta)) * (exp(gammam) - h) * z;
+//22. Flexible-price Euler equation for bonds
+  lambda_star = R_star + lambda_star(+1) - z(+1) - ppi(+1);
+//23. Flexible-price capital utilization
+  rho_star = xi * u_star;
+//24. Flexible-price value of capital
+  phi_star = (1 - delta) * bbeta * exp(-gammam) * (phi_star(+1) - z(+1)) 
+             + (1 - (1 - delta) * bbeta * exp(-gammam)) * (lambda_star(+1) - z(+1) + rho_star(+1));
+//25. Flexible-price investment Euler equation
+  lambda_star = phi_star + mu - exp(2 * gammam) * s2prime * (i_star - i_star(-1) + z) 
+                + bbeta * exp(2 * gammam) * s2prime * (i_star(+1) - i_star + z(+1));
+//26. Flexible-price capital accumulation
+  k_star = u_star + kbar_star(-1) - z;
+//27. Flexible-price law of motion for capital stock
+  kbar_star = (1 - delta) * exp(-gammam) * (kbar_star(-1) - z) 
+              + (1 - (1 - delta) * exp(-gammam)) * (mu + i_star);
+//28. Flexible-price wage equation
+  w_star = (1 / (1 + bbeta)) * w_star(-1) + (bbeta / (1 + bbeta)) * w_star(+1) 
+           - kappa_w * gw_star + (iw / (1 + bbeta)) * ppi(-1) 
+           - ((1 + bbeta * iw) / (1 + bbeta)) * ppi 
+           + (bbeta / (1 + bbeta)) * ppi(+1) 
+           + (iw / (1 + bbeta)) * z(-1) 
+           - ((1 + bbeta * iw - rho_z * bbeta) / (1 + bbeta)) * z;
+//29. Flexible-price wage gap
+  gw_star = w_star - (nu * L_star + b - lambda_star);
+//30. Flexible-price output gap
+  x_star = y_star - y_star;
+//31. Flexible-price national income identity
+  y_star = g + (cstar_ss / ystar_ss) * c_star + (istar_ss / ystar_ss) * i_star + (rho_ss * kstar_ss / ystar_ss) * u_star;
 
-  y_star = ((ystar_ss+Fstar)/ystar_ss)*(aalpha*k_star+(1-aalpha)*L_star); 
-               
-  rho_star = w_star+L_star-k_star;
+// Exogenous shocks
+  z = rho_z * z(-1) + eps_z;             // Technology shock
+  mu = rho_mu * mu(-1) + eps_mu;         // Investment-specific shock
+  etamp = rho_mp * etamp(-1) + eps_mp;   // Monetary policy shock
+  g = rho_g * g(-1) + eps_g;             // Government spending shock
+  lambda_p = rho_p * lambda_p(-1) + eps_p; // Price markup shock
+  lambda_w = rho_w * lambda_w(-1) + eps_w; // Wage markup shock
+  b = rho_b * b(-1) + eps_b;             // Preference (demand) shock
 
-// Real marginal cost is going to be fixed under flexible economy;
-
-  0 = aalpha*rho_star+(1-aalpha)*w_star;
-
-  ppi = (bbeta/(1 + ip * bbeta))*ppi(+1)+(ip/(1 + ip*bbeta))*ppi(-1)+kappa*s_star+kappa * lambda_p;      
-              
-  lambda_star = (h * bbeta * exp(gammma) / (exp(gammma) - h * bbeta) * (exp(gammma) - h)) * c_star(+1) - ((exp(2 * gammma) + h^2 * bbeta) / (exp(gammma) - h * bbeta) * (exp(gammma) - h)) * c_star + (h * exp(gammma) / (exp(gammma) - h * bbeta) * (exp(gammma) - h)) * c_star(-1) + ((h * bbeta * exp(gammma) * rho_z - h * exp(gammma)) / (exp(gammma) - h * bbeta) * (exp(gammma) - h)) * z;
-
-  lambda_star = R_star+lambda_star(+1)-z(+1)-ppi(+1);
-
-  rho_star = xi*u_star;
-
-  phi_star = (1-delta)*bbeta*exp(-gammma)*(phi_star(+1)-z(+1))+(1-(1-delta)*bbeta*exp(-gammma))*(lambda_star(+1)-z(+1)+rho_star(+1));
-
-  lambda_star = phi_star+mu-exp(2*gammma)*s2prime*(i_star-i_star(-1)+z)+bbeta*exp(2*gammma)*s2prime*(i_star(+1)-i_star+z(+1));
-
-  k_star = u_star+kbar_star(-1)-z;
-
-  kbar_star = (1-delta)*exp(-gammma)*(kbar_star(-1)-z)+(1-(1-delta)*exp(-gammma))*(mu+i_star);
-
-  w_star = (1/(1+bbeta))*w_star(-1)+bbeta/(1 + bbeta)*w_star(+1)-kappa_w*gw_star+(iw/(1 + bbeta))* ppi(-1)-(1+bbeta*iw/(1 + bbeta))*ppi+(bbeta/(1/bbeta))*ppi(+1)+(iw/(1+bbeta))*z(-1)-((1+bbeta*iw-rho_z*bbeta)/(1+bbeta))*z;
-
-  gw_star=w_star-(nu*L_star+b-lambda_star);
-
-  //No markup shock so equation fourteen is not included
-
-  x_star = y_star - ((rho * k_star) / y_star) * u_star;
-
-  (1/g_ss)*y_star = (1/g_ss)*g+(cstar_ss/ystar_ss)*c_star+(istar_ss/ystar_ss)*i_star+(rho_ss*kstar_ss)/ystar_ss*u_star;
-
-//Exogenous shocks
-  z = rho_z*z(-1)+eps_z;             // technology;
-  mu = rho_mu*mu(-1)+eps_mu;         // investment;
-  etamp = rho_mp*etamp(-1)+eps_mp;   //monetary policy;
-  g = rho_g*g(-1)+eps_g;             //government spending;
-  lambda_p = rho_p*lambda_p+eps_p; //markup;
-
-  
 end;
 
+initval;
+    y = log(y_ss);
+    k = log(k_ss);
+    L = log(L_ss);
+    rho = log(rho_ss);
+    w = log(w_ss);
+    s = 0;
+    ppi = 0;
+    c = log(c_ss);
+    lambda = log(lambdaL);
+    R = log(R_ss);
+    u = 0;
+    phi = 0;
+    i = log(i_ss);
+    kbar = log(k_ss);
+    x = 0;
+    gw = 0;
+    b = 0;
+    g = 0;
+    mu = 0;
+    etamp = 0;
+    lambda_p = 0;
+    lambda_w = 0;
+    z = 0;
+    
+    // Flexible-price variables
+    y_star = log(ystar_ss);
+    k_star = log(kstar_ss);
+    L_star = log(Lstar_ss);
+    rho_star = log(rho_ss);
+    w_star = log(wstar_ss);
+    s_star = 0;
+    c_star = log(cstar_ss);
+    lambda_star = log(lambdaLstar);
+    R_star = log(R_ss);
+    u_star = 0;
+    phi_star = 0;
+    i_star = log(istar_ss);
+    kbar_star = log(kstar_ss);
+    x_star = 0;
+    gw_star = 0;
+end;
 
 // Shock specification (model shocks)
 shocks;
-    var eps_z = 0.1^2;
-    var eps_p = 0.14^2;
-    var eps_mp = 0.22^2;
-    var eps_mu = 6.03^2;
-    var eps_g = 0.35^2;
+    var eps_z; stderr 0.1^2;
+    var eps_p; stderr 0.14^2;
+    var eps_mp; stderr 0.22^2;
+    var eps_mu; stderr 6.03^2;
+    var eps_g; stderr 0.35^2;
+    var eps_w; stderr 0.1^2;
+    var eps_b; stderr 0.1^2;
 end;
 
-// Parameter estimation block
+// Check residuals
+resid;
+
+// Steady-state computation
+steady;
+
+// Check Blanchard-Kahn conditions
+check;
+
+// Simulation command
+//stoch_simul(irf=50, order=1);
+
+// Estimated parameters
 estimated_params;
-    aalpha, beta_pdf, 0.3, 0.05;
-    // ip, beta_pdf, 0.5, 0.15;
+    aalpha, normal_pdf, 0.3, 0.05;
+    ip, beta_pdf, 0.50, 0.05;
     iw, beta_pdf, 0.5, 0.15;
-    gammma, normal_pdf, 0.5, 0.03;
+    gammam, normal_pdf, 0.5, 0.03;
     h, beta_pdf, 0.5, 0.1;
-    // lambda_p, normal_pdf, 0.15, 0.05;
-    // lambda_w, normal_pdf, 0.15, 0.05;
-    L_ss, normal_pdf, 0, 0.5;
-    pi_ss, normal_pdf, 0.5, 0.1;
-    bbeta, gamma_pdf, 0.25, 0.1;
+    lambda_p_ss, normal_pdf, 0.15, 0.05;
+    lambda_w_ss, normal_pdf, 0.15, 0.05;
+    L_ss, normal_pdf, 0.00, 0.1;
+    pi_ss, normal_pdf, 0.50, 0.1;
+    bbeta, gamma_pdf, 0.25, 0.005;
     nu, gamma_pdf, 2, 0.75;
-    // zeta_p, beta_pdf, 0.66, 0.1;
-    // zeta_w, beta_pdf, 0.66, 0.1;
-    xi, gamma_pdf, 5, 1;
+    zeta_p, beta_pdf, 0.66, 0.05;
+    zeta_w, beta_pdf, 0.66, 0.05;
     s2prime, gamma_pdf, 4, 1;
     phi_pi, normal_pdf, 1.7, 0.3;
     phi_x, normal_pdf, 0.13, 0.05;
@@ -182,14 +275,53 @@ estimated_params;
     rho_mu, beta_pdf, 0.6, 0.2;
     rho_p, beta_pdf, 0.6, 0.2;
     rho_w, beta_pdf, 0.6, 0.2;
-    rho_b, beta_pdf, 0.6, 0.2;
-    theta_p, beta_pdf, 0.5, 0.2;
-    theta_w, beta_pdf, 0.5, 0.2;
+    rho_b, beta_pdf, 0.6, 0.2; 
+    theta_mp, INV_GAMMA1_PDF, 0.10, 1.00;
+    theta_z, INV_GAMMA1_PDF, 0.50, 1.00;
+    theta_g, INV_GAMMA1_PDF, 0.50, 1.00;
+    theta_mu, INV_GAMMA1_PDF, 0.50, 1.00;
+    theta_p, INV_GAMMA1_PDF, 0.10, 1.00;
+    theta_w, INV_GAMMA1_PDF, 0.10, 1.00;
+    theta_b, INV_GAMMA1_PDF, 0.10, 1.00;
 end;
 
+// Fix parameters causing issues
+phi_x = 0.13; // Fixed to calibrated value
+xi = 5; // Fixed to calibrated value
+
+// Provide initial values for estimated parameters within prior bounds
+estimated_params_init;
+    aalpha, 0.3;
+    ip, 0.50;
+    iw, 0.5;
+    gammam, 0.5;
+    h, 0.5;
+    lambda_p_ss, 0.15;
+    lambda_w_ss, 0.15;
+    L_ss, 0.00;
+    pi_ss, 0.5;
+    bbeta, 0.25;
+    nu, 2;
+    zeta_p, 0.66;
+    zeta_w, 0.66;
+    s2prime, 4;
+    phi_pi, 1.7;
+    phi_dx, 0.13;
+    rho_R, 0.6;
+    rho_mp, 0.4;
+    rho_z, 0.6;
+    rho_g, 0.6;
+    rho_mu, 0.6;
+    rho_p, 0.6;
+    rho_w, 0.6;
+    rho_b, 0.6;
+    theta_p, 0.5;
+    theta_w, 0.5;
+end;
+
+
 // Observed variables for estimation
-varobs y c i ppi R L w;
+varobs y c i ppi R L;
 
 // Estimation command
-estimation(datafile='model_data.mat', first_obs = 10, mode_compute=3, mh_replic=120000, mh_jscale=0.4);
-
+estimation(datafile='model_data.mat', mode_compute=9, mh_replic=120000, mh_jscale=0.4);
